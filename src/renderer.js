@@ -306,8 +306,8 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
       const framePath = path.join(outputDir, frameFilename);
       const buffer = Buffer.from(data, 'base64');
 
-      // Write to disk asynchronously without blocking the frame rendering loop
-      fs.writeFile(framePath, buffer, () => {});
+      // Write to disk and await completion to prevent memory accumulation in RAM
+      await fs.promises.writeFile(framePath, buffer);
 
       const percent = Math.round((frame / totalFrames) * 100);
       if (onProgress) {
