@@ -23,6 +23,48 @@ function findChromeExecutable() {
   return null;
 }
 
+let globalBrowser = null;
+
+/**
+ * Reuses a single running Chrome browser instance across requests.
+ * This completely eliminates the 20-second browser startup delay per video render!
+ */
+async function getBrowser() {
+  if (globalBrowser && globalBrowser.connected) {
+    return globalBrowser;
+  }
+
+  const executablePath = findChromeExecutable();
+  globalBrowser = await puppeteer.launch({
+    headless: true,
+    executablePath: executablePath || undefined,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-web-security',
+      '--allow-file-access-from-files',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-background-networking',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-breakpad',
+      '--disable-client-side-phishing-detection',
+      '--disable-default-apps',
+      '--disable-hang-monitor',
+      '--disable-ipc-flooding-protection',
+      '--disable-popup-blocking',
+      '--disable-prompt-on-repost',
+      '--disable-renderer-backgrounding'
+    ]
+  });
+
+  return globalBrowser;
+}
+
 /**
  * Renders an HTML page frame-by-frame by advancing time deterministically
  * and capturing screenshots.
@@ -37,25 +79,8 @@ function findChromeExecutable() {
  * @param {function} onProgress Progress callback: (percent, message) => {}
  */
 async function renderFrames(htmlPath, outputDir, width, height, duration, fps, deviceMode, onProgress) {
-  const executablePath = findChromeExecutable();
+  const browser = await getBrowser();
   
-  // Launch Puppeteer headless browser with performance optimizations
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: executablePath || undefined,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-web-security',
-      '--allow-file-access-from-files',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process'
-    ]
-  });
-
   try {
     const page = await browser.newPage();
 
@@ -270,7 +295,7 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
       }
     }
   } finally {
-    await browser.close();
+    await page.close(); // Only close the page tab, keep the global browser process alive for fast reuse!
   }
 }
 
