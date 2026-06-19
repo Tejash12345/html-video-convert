@@ -58,7 +58,10 @@ async function getBrowser() {
       '--disable-ipc-flooding-protection',
       '--disable-popup-blocking',
       '--disable-prompt-on-repost',
-      '--disable-renderer-backgrounding'
+      '--disable-renderer-backgrounding',
+      '--js-flags="--max-old-space-size=256"',
+      '--disable-extensions',
+      '--mute-audio'
     ]
   });
 
@@ -87,7 +90,7 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
 
     let viewportWidth = width;
     let viewportHeight = height;
-    let scaleFactor = renderQuality === 'high' ? 2 : 1;
+    let scaleFactor = 1; // Native pixel-to-pixel scale factor for desktop (prevents 4K memory spikes on 512MB RAM)
 
     // Simulate mobile viewport size while maintaining high-resolution output using deviceScaleFactor
     if (deviceMode === 'mobile') {
@@ -96,12 +99,12 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         // Portrait mobile aspect ratio mapping to a base width of 360px
         viewportWidth = 360;
         viewportHeight = Math.round(360 * (height / width));
-        scaleFactor = (width / 360) * (renderQuality === 'high' ? 2 : 1);
+        scaleFactor = width / 360;
       } else {
         // Landscape mobile aspect ratio mapping to a base width of 640px
         viewportWidth = 640;
         viewportHeight = Math.round(640 * (height / width));
-        scaleFactor = (width / 640) * (renderQuality === 'high' ? 2 : 1);
+        scaleFactor = width / 640;
       }
     }
 
