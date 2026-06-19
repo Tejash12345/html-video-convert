@@ -268,6 +268,9 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     const totalFrames = Math.ceil(duration * fps);
     const frameDurationMs = 1000 / fps;
 
+    // Create a single Chrome DevTools Protocol session for raw high-speed screenshot captures
+    const client = await page.target().createCDPSession();
+
     for (let frame = 1; frame <= totalFrames; frame++) {
       // For all frames after the first, step the clocks forward
       if (frame > 1) {
@@ -276,15 +279,16 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         }, frameDurationMs);
       }
 
-      // Render frame screenshot (using optimized JPEG encoding and non-blocking asynchronous disk writes for maximum speed)
+      // Capture frame using raw Chrome DevTools Protocol with hardware speed optimizations enabled
+      const { data } = await client.send('Page.captureScreenshot', {
+        format: 'jpeg',
+        quality: 80,
+        optimizeForSpeed: true
+      });
+
       const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
       const framePath = path.join(outputDir, frameFilename);
-      
-      const buffer = await page.screenshot({
-        type: 'jpeg',
-        quality: 80, // Slightly reduced quality to dramatically speed up JPEG encoding and lower disk IO
-        omitBackground: false
-      });
+      const buffer = Buffer.from(data, 'base64');
 
       // Write to disk asynchronously without blocking the frame rendering loop
       fs.writeFile(framePath, buffer, () => {});

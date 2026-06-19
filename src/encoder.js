@@ -28,9 +28,11 @@ if (process.platform === 'win32') {
  * @param {string} framesDir Directory containing the frame images (e.g. frame_0001.png)
  * @param {string} outputPath Target path for the MP4 video output
  * @param {number} fps Output frame rate (FPS)
+ * @param {number} targetWidth Output scaling width
+ * @param {number} targetHeight Output scaling height
  * @param {function} onProgress Progress callback: (percent, message) => {}
  */
-function encodeVideo(framesDir, outputPath, fps, onProgress) {
+function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onProgress) {
   return new Promise((resolve, reject) => {
     let totalFrames = 0;
     try {
@@ -50,6 +52,7 @@ function encodeVideo(framesDir, outputPath, fps, onProgress) {
       .output(outputPath)
       .outputFPS(fps)
       .videoCodec('libx264')
+      .videoFilters(`scale=${targetWidth}:${targetHeight}`)
       .outputOptions([
         '-pix_fmt yuv420p',  // Standard pixel format for maximum browser compatibility
         '-crf 18',           // Constant Rate Factor (18 represents near-lossless visually)
