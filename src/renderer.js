@@ -331,7 +331,15 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     }
   } finally {
     if (page) {
-      await page.close(); // Only close the page tab, keep the global browser process alive for fast reuse!
+      try {
+        await page.close();
+      } catch (err) {}
+    }
+    if (globalBrowser) {
+      try {
+        await globalBrowser.close();
+      } catch (err) {}
+      globalBrowser = null;
     }
   }
 }
