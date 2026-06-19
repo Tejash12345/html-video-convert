@@ -35,9 +35,14 @@ if (process.platform === 'win32') {
 function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onProgress) {
   return new Promise((resolve, reject) => {
     let totalFrames = 0;
+    let extension = 'jpg';
     try {
       const files = fs.readdirSync(framesDir);
-      totalFrames = files.filter(f => f.startsWith('frame_') && f.endsWith('.jpg')).length;
+      const frameFiles = files.filter(f => f.startsWith('frame_'));
+      if (frameFiles.length > 0) {
+        extension = frameFiles[0].split('.').pop();
+      }
+      totalFrames = frameFiles.filter(f => f.endsWith(`.${extension}`)).length;
     } catch (e) {
       console.warn('[Encoder] Failed to determine frame count:', e.message);
     }
@@ -47,12 +52,12 @@ function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onPr
     }
 
     ffmpeg()
-      .input(path.join(framesDir, 'frame_%04d.jpg'))
+      .input(path.join(framesDir, `frame_%04d.${extension}`))
       .inputFPS(fps)
       .output(outputPath)
       .outputFPS(fps)
       .videoCodec('libx264')
-      .videoFilters(`scale=${targetWidth}:${targetHeight}`)
+      .videoFilters(`scale=${targetWidth}:${targetHeight}:flags=lanczos`)
       .outputOptions([
         '-pix_fmt yuv420p',  // Standard pixel format for maximum browser compatibility
         '-crf 18',           // Constant Rate Factor (18 represents near-lossless visually)

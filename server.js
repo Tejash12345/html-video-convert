@@ -97,6 +97,7 @@ app.post('/api/generate', upload.single('file'), async (req, res) => {
     const fps = parseInt(req.body.fps, 10) || 30;
     const deviceMode = req.body.deviceMode || 'desktop';
     const renderQuality = req.body.renderQuality || 'fast';
+    const hideSelectors = req.body.hideSelectors || '';
 
     // Calculate rendering vs target scaling dimensions for Fast render
     let renderWidth = width;
@@ -118,7 +119,7 @@ app.post('/api/generate', upload.single('file'), async (req, res) => {
     });
 
     // Start background processing
-    processHtmlToVideo(jobId, filePath, originalname, width, height, renderWidth, renderHeight, duration, fps, deviceMode);
+    processHtmlToVideo(jobId, filePath, originalname, width, height, renderWidth, renderHeight, duration, fps, deviceMode, renderQuality, hideSelectors);
 
     // Return jobId so frontend can subscribe
     res.json({ jobId });
@@ -190,7 +191,7 @@ app.get('/api/download/:filename', (req, res) => {
 });
 
 // Background process manager
-async function processHtmlToVideo(jobId, uploadedFilePath, originalName, targetWidth, targetHeight, renderWidth, renderHeight, duration, fps, deviceMode) {
+async function processHtmlToVideo(jobId, uploadedFilePath, originalName, targetWidth, targetHeight, renderWidth, renderHeight, duration, fps, deviceMode, renderQuality, hideSelectors) {
   const jobTempDir = path.join(TEMP_DIR, jobId);
   const framesDir = path.join(jobTempDir, 'frames');
 
@@ -239,7 +240,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, targetW
     updateJobProgress(jobId, 10, 'Opening Puppeteer render sandbox...');
 
     // Render frames at scaled rendering dimensions
-    await renderFrames(entryHtmlPath, framesDir, renderWidth, renderHeight, duration, fps, deviceMode, (percent, msg) => {
+    await renderFrames(entryHtmlPath, framesDir, renderWidth, renderHeight, duration, fps, deviceMode, renderQuality, hideSelectors, (percent, msg) => {
       // Scale Puppeteer render progress to occupy 10% to 80% range of the total workflow
       const overallPercent = Math.round(10 + percent * 0.7);
       updateJobProgress(jobId, overallPercent, msg);

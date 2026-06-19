@@ -92,6 +92,15 @@
             </div>
           </div>
 
+          <!-- Hide CSS Elements -->
+          <div class="form-row">
+            <div class="form-group col-12">
+              <label for="hide-selectors" class="form-label">Hide Playback Controls / Elements (Optional)</label>
+              <input type="text" id="hide-selectors" class="form-input" placeholder="e.g. .control-bar, .playbar, .controls" value=".control-bar, .controls, .playbar, .playback-controls, .gsap-devtools, .bannerify-controls, .bannerify-playbar, [class*=&quot;control-bar&quot;], [class*=&quot;playbar&quot;]">
+              <p class="dropzone-text-secondary" style="margin-top: 2px;">Specify CSS selectors (comma-separated) to hide unwanted control bars or preview elements from the final video.</p>
+            </div>
+          </div>
+
           <!-- Custom dimensions inputs (hidden by default) -->
           <div id="custom-resolution-group" class="form-row custom-res-row hidden">
             <div class="form-group col-6">
@@ -194,7 +203,7 @@
         <!-- Video Player preview (shown when job succeeds) -->
         <div id="video-preview-container" class="video-preview-container hidden">
           <div class="player-wrapper">
-            <video id="preview-player" controls preload="auto">
+            <video id="preview-player" autoplay loop muted playsinline preload="auto">
               <source id="preview-source" src="" type="video/mp4">
               Your browser does not support the video tag.
             </video>

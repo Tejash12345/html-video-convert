@@ -78,7 +78,7 @@ async function getBrowser() {
  * @param {string} deviceMode 'desktop' or 'mobile' layout simulation
  * @param {function} onProgress Progress callback: (percent, message) => {}
  */
-async function renderFrames(htmlPath, outputDir, width, height, duration, fps, deviceMode, onProgress) {
+async function renderFrames(htmlPath, outputDir, width, height, duration, fps, deviceMode, renderQuality, hideSelectors, onProgress) {
   const browser = await getBrowser();
   
   let page = null;
@@ -263,6 +263,13 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     
     await page.goto(fileUrl, { waitUntil: 'load', timeout: 60000 });
 
+    // Inject CSS to hide specified selectors
+    if (hideSelectors && hideSelectors.trim()) {
+      await page.addStyleTag({
+        content: `${hideSelectors} { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }`
+      });
+    }
+
     // Allow static image loading and font face rendering to finish (reduced buffer for speed)
     await new Promise(resolve => setTimeout(resolve, 400));
 
@@ -280,14 +287,16 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         }, frameDurationMs);
       }
 
-      // Capture frame using raw Chrome DevTools Protocol with hardware speed optimizations enabled
-      const { data } = await client.send('Page.captureScreenshot', {
-        format: 'jpeg',
-        quality: 80,
-        optimizeForSpeed: true
-      });
+      // Capture frame using raw Chrome DevTools Protocol with quality settings
+      const isPng = renderQuality === 'high';
+      const screenshotOptions = isPng 
+        ? { format: 'png' } 
+        : { format: 'jpeg', quality: 90, optimizeForSpeed: true };
 
-      const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
+      const { data } = await client.send('Page.captureScreenshot', screenshotOptions);
+
+      const ext = isPng ? 'png' : 'jpg';
+      const frameFilename = `frame_${String(frame).padStart(4, '0')}.${ext}`;
       const framePath = path.join(outputDir, frameFilename);
       const buffer = Buffer.from(data, 'base64');
 

@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fps = parseInt(form.querySelector('input[name="fps"]:checked').value, 10);
     const deviceMode = document.getElementById('device-mode').value;
     const renderQuality = document.getElementById('render-quality').value;
+    const hideSelectors = document.getElementById('hide-selectors').value;
 
     // Prepare FormData
     const formData = new FormData();
@@ -159,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('fps', fps);
     formData.append('deviceMode', deviceMode);
     formData.append('renderQuality', renderQuality);
+    formData.append('hideSelectors', hideSelectors);
 
     try {
       writeLog(`Uploading ${selectedFile.name} (${formatBytes(selectedFile.size)})...`, 'info');
@@ -220,14 +222,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         eventSource.close();
 
-        // Update and show video preview
+        // Update and show success state with loop preview
         setTimeout(() => {
-          previewPlayer.src = videoUrl;
+          if (previewPlayer) {
+            previewPlayer.src = videoUrl;
+            previewPlayer.load();
+            previewPlayer.play().catch(e => console.log('Autoplay play blocked or interrupted:', e));
+          }
           downloadBtn.href = `/api/download/${jobId}.mp4`;
-          previewPlayer.load();
 
           progressContainer.classList.add('hidden');
           videoPreviewContainer.classList.remove('hidden');
+
+          // Automatically trigger download
+          writeLog('Triggering automatic download...', 'info');
+          downloadBtn.click();
 
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = 'Render Video';
@@ -272,11 +281,12 @@ document.addEventListener('DOMContentLoaded', () => {
     consoleLog.scrollTop = consoleLog.scrollHeight;
   }
 
-  // 7. Reset page UI
   resetBtn.addEventListener('click', () => {
     // Clear video element
-    previewSource.src = '';
-    previewPlayer.load();
+    if (previewPlayer) {
+      previewPlayer.src = '';
+      previewPlayer.load();
+    }
 
     // Clear file selection
     selectedFile = null;

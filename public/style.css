@@ -759,3 +759,58 @@ body {
     width: 100%;
   }
 }
+
+/* Success Card UI */
+.success-card {
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px dashed rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-grow: 1;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.success-icon-wrapper {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-green);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.success-checkmark {
+  width: 36px;
+  height: 36px;
+  animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.success-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 380px;
+  line-height: 1.5;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
