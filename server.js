@@ -252,7 +252,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, targetW
     const outputVideoPath = path.join(VIDEOS_DIR, outputVideoFilename);
 
     // Encode video and scale up to full target resolution in FFmpeg (instant upscaling)
-    await encodeVideo(framesDir, outputVideoPath, fps, targetWidth, targetHeight, (percent, msg) => {
+    await encodeVideo(framesDir, outputVideoPath, fps, targetWidth, targetHeight, renderQuality, (percent, msg) => {
       // Scale FFmpeg progress to occupy 85% to 98% range of total workflow
       const overallPercent = Math.round(85 + percent * 0.13);
       updateJobProgress(jobId, overallPercent, msg);

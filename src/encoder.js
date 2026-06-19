@@ -32,7 +32,7 @@ if (process.platform === 'win32') {
  * @param {number} targetHeight Output scaling height
  * @param {function} onProgress Progress callback: (percent, message) => {}
  */
-function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onProgress) {
+function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, renderQuality, onProgress) {
   return new Promise((resolve, reject) => {
     let totalFrames = 0;
     let extension = 'jpg';
@@ -51,6 +51,10 @@ function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onPr
       return reject(new Error('No frame images found to encode.'));
     }
 
+    const isHighQuality = renderQuality === 'high';
+    const crfValue = isHighQuality ? '12' : '18';
+    const presetValue = isHighQuality ? 'medium' : 'ultrafast';
+
     ffmpeg()
       .input(path.join(framesDir, `frame_%04d.${extension}`))
       .inputFPS(fps)
@@ -60,8 +64,8 @@ function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, onPr
       .videoFilters(`scale=${targetWidth}:${targetHeight}:flags=lanczos`)
       .outputOptions([
         '-pix_fmt yuv420p',  // Standard pixel format for maximum browser compatibility
-        '-crf 18',           // Constant Rate Factor (18 represents near-lossless visually)
-        '-preset ultrafast'  // Speed up encoding to the absolute maximum speed
+        `-crf ${crfValue}`,   // Visually lossless for high quality (12) vs standard (18)
+        `-preset ${presetValue}` // Speed vs compression efficiency preset
       ])
       .on('start', (commandLine) => {
         console.log('[FFmpeg Command]:', commandLine);

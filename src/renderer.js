@@ -87,7 +87,7 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
 
     let viewportWidth = width;
     let viewportHeight = height;
-    let scaleFactor = 1;
+    let scaleFactor = renderQuality === 'high' ? 2 : 1;
 
     // Simulate mobile viewport size while maintaining high-resolution output using deviceScaleFactor
     if (deviceMode === 'mobile') {
@@ -96,12 +96,12 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         // Portrait mobile aspect ratio mapping to a base width of 360px
         viewportWidth = 360;
         viewportHeight = Math.round(360 * (height / width));
-        scaleFactor = width / 360;
+        scaleFactor = (width / 360) * (renderQuality === 'high' ? 2 : 1);
       } else {
         // Landscape mobile aspect ratio mapping to a base width of 640px
         viewportWidth = 640;
         viewportHeight = Math.round(640 * (height / width));
-        scaleFactor = width / 640;
+        scaleFactor = (width / 640) * (renderQuality === 'high' ? 2 : 1);
       }
     }
 
@@ -263,12 +263,18 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     
     await page.goto(fileUrl, { waitUntil: 'load', timeout: 60000 });
 
-    // Inject CSS to hide specified selectors
+    // Inject CSS for text rendering optimization and hiding specified selectors
+    let cssInjection = `
+      * {
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+      }
+    `;
     if (hideSelectors && hideSelectors.trim()) {
-      await page.addStyleTag({
-        content: `${hideSelectors} { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }`
-      });
+      cssInjection += `\n${hideSelectors} { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }`;
     }
+    await page.addStyleTag({ content: cssInjection });
 
     // Allow static image loading and font face rendering to finish (reduced buffer for speed)
     await new Promise(resolve => setTimeout(resolve, 400));
