@@ -46,8 +46,6 @@ async function getBrowser() {
       '--disable-gpu',
       '--disable-dev-shm-usage',
       '--no-first-run',
-      '--no-zygote',
-      '--single-process',
       '--disable-background-networking',
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows',
@@ -285,9 +283,6 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     const totalFrames = Math.ceil(duration * fps);
     const frameDurationMs = 1000 / fps;
 
-    // Create a single Chrome DevTools Protocol session for raw high-speed screenshot captures
-    const client = await page.target().createCDPSession();
-
     for (let frame = 1; frame <= totalFrames; frame++) {
       // For all frames after the first, step the clocks forward
       if (frame > 1) {
@@ -296,29 +291,23 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         }, frameDurationMs);
       }
 
-      // Capture frame using raw Chrome DevTools Protocol with quality settings
-      // We use high-quality JPEG (95%) for High Quality to prevent OOM memory spikes from PNGs
+      // Capture frame using standard memory-safe page.screenshot
       const isHigh = renderQuality === 'high';
       const screenshotOptions = {
-        format: 'jpeg',
-        quality: isHigh ? 95 : 80,
-        optimizeForSpeed: !isHigh
+        type: 'jpeg',
+        quality: isHigh ? 95 : 80
       };
 
-      const { data } = await client.send('Page.captureScreenshot', screenshotOptions);
+      const buffer = await page.screenshot(screenshotOptions);
 
       const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
       const framePath = path.join(outputDir, frameFilename);
-      const buffer = Buffer.from(data, 'base64');
 
       // Write to disk and await completion to prevent memory accumulation in RAM
       await fs.promises.writeFile(framePath, buffer);
 
-      // Periodically trigger garbage collection in Chrome and Node to keep RAM below 512MB
+      // Periodically trigger Node garbage collection to keep RAM below 512MB
       if (frame % 15 === 0) {
-        try {
-          await client.send('HeapProfiler.collectGarbage');
-        } catch (err) {}
         if (global.gc) {
           global.gc();
         }
