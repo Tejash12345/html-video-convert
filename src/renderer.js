@@ -33,12 +33,13 @@ function findChromeExecutable() {
  * @param {number} height Resolution height
  * @param {number} duration Video duration in seconds
  * @param {number} fps Frames per second
+ * @param {string} deviceMode 'desktop' or 'mobile' layout simulation
  * @param {function} onProgress Progress callback: (percent, message) => {}
  */
-async function renderFrames(htmlPath, outputDir, width, height, duration, fps, onProgress) {
+async function renderFrames(htmlPath, outputDir, width, height, duration, fps, deviceMode, onProgress) {
   const executablePath = findChromeExecutable();
   
-  // Launch Puppeteer headless browser
+  // Launch Puppeteer headless browser with performance optimizations
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: executablePath || undefined,
@@ -46,13 +47,45 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, o
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-web-security',
-      '--allow-file-access-from-files'
+      '--allow-file-access-from-files',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process'
     ]
   });
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width, height });
+
+    let viewportWidth = width;
+    let viewportHeight = height;
+    let scaleFactor = 1;
+
+    // Simulate mobile viewport size while maintaining high-resolution output using deviceScaleFactor
+    if (deviceMode === 'mobile') {
+      await page.setUserAgent('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36');
+      if (height > width) {
+        // Portrait mobile aspect ratio mapping to a base width of 360px
+        viewportWidth = 360;
+        viewportHeight = Math.round(360 * (height / width));
+        scaleFactor = width / 360;
+      } else {
+        // Landscape mobile aspect ratio mapping to a base width of 640px
+        viewportWidth = 640;
+        viewportHeight = Math.round(640 * (height / width));
+        scaleFactor = width / 640;
+      }
+    }
+
+    await page.setViewport({
+      width: viewportWidth,
+      height: viewportHeight,
+      deviceScaleFactor: scaleFactor,
+      isMobile: deviceMode === 'mobile',
+      hasTouch: deviceMode === 'mobile'
+    });
 
     // Inject time mocking script before page loads
     await page.evaluateOnNewDocument(() => {

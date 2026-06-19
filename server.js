@@ -95,6 +95,7 @@ app.post('/api/generate', upload.single('file'), async (req, res) => {
     const height = parseInt(req.body.height, 10) || 1080;
     const duration = parseFloat(req.body.duration) || 5;
     const fps = parseInt(req.body.fps, 10) || 30;
+    const deviceMode = req.body.deviceMode || 'desktop';
 
     const jobId = `job-${Date.now()}`;
 
@@ -108,7 +109,7 @@ app.post('/api/generate', upload.single('file'), async (req, res) => {
     });
 
     // Start background processing
-    processHtmlToVideo(jobId, filePath, originalname, width, height, duration, fps);
+    processHtmlToVideo(jobId, filePath, originalname, width, height, duration, fps, deviceMode);
 
     // Return jobId so frontend can subscribe
     res.json({ jobId });
@@ -179,7 +180,7 @@ app.get('/api/download/:filename', (req, res) => {
 });
 
 // Background process manager
-async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, height, duration, fps) {
+async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, height, duration, fps, deviceMode) {
   const jobTempDir = path.join(TEMP_DIR, jobId);
   const framesDir = path.join(jobTempDir, 'frames');
 
@@ -228,7 +229,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, 
     updateJobProgress(jobId, 10, 'Opening Puppeteer render sandbox...');
 
     // Render frames
-    await renderFrames(entryHtmlPath, framesDir, width, height, duration, fps, (percent, msg) => {
+    await renderFrames(entryHtmlPath, framesDir, width, height, duration, fps, deviceMode, (percent, msg) => {
       // Scale Puppeteer render progress to occupy 10% to 80% range of the total workflow
       const overallPercent = Math.round(10 + percent * 0.7);
       updateJobProgress(jobId, overallPercent, msg);

@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const duration = parseFloat(durationSlider.value);
     const fps = parseInt(form.querySelector('input[name="fps"]:checked').value, 10);
+    const deviceMode = document.getElementById('device-mode').value;
 
     // Prepare FormData
     const formData = new FormData();
@@ -155,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('height', height);
     formData.append('duration', duration);
     formData.append('fps', fps);
+    formData.append('deviceMode', deviceMode);
 
     try {
       writeLog(`Uploading ${selectedFile.name} (${formatBytes(selectedFile.size)})...`, 'info');
