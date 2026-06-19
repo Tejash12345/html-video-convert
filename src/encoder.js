@@ -65,7 +65,8 @@ function encodeVideo(framesDir, outputPath, fps, targetWidth, targetHeight, rend
       .outputOptions([
         '-pix_fmt yuv420p',  // Standard pixel format for maximum browser compatibility
         `-crf ${crfValue}`,   // Visually lossless for high quality (12) vs standard (18)
-        `-preset ${presetValue}` // Speed vs compression efficiency preset
+        `-preset ${presetValue}`, // Speed vs compression efficiency preset
+        '-threads 1'         // Limit to 1 CPU thread to prevent memory allocation spikes in container
       ])
       .on('start', (commandLine) => {
         console.log('[FFmpeg Command]:', commandLine);
