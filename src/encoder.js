@@ -3,8 +3,24 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 
-// Configure fluent-ffmpeg to use local static FFmpeg binary
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+// Configure fluent-ffmpeg path (supports Render Linux system FFmpeg & Windows static fallback)
+if (process.platform === 'win32') {
+  ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+} else {
+  const globalFfmpegPaths = ['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
+  let foundGlobal = false;
+  for (const p of globalFfmpegPaths) {
+    if (fs.existsSync(p)) {
+      ffmpeg.setFfmpegPath(p);
+      foundGlobal = true;
+      console.log(`[Encoder] Using system FFmpeg path: ${p}`);
+      break;
+    }
+  }
+  if (!foundGlobal) {
+    ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+  }
+}
 
 /**
  * Combines rendered frame images into an MP4 video.
