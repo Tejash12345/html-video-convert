@@ -132,7 +132,8 @@ app.get('/api/progress/:jobId', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no' // Prevent Nginx/Render proxy from buffering SSE progress updates
   });
 
   // If the job has already finished before SSE was connected:
@@ -147,10 +148,10 @@ app.get('/api/progress/:jobId', (req, res) => {
     return;
   }
 
-  // Keep-alive heartbeat
+  // Keep-alive heartbeat (reduced interval to keep sockets open on Render)
   const keepAlive = setInterval(() => {
     res.write(': keepalive\n\n');
-  }, 15000);
+  }, 10000);
 
   // Register client
   job.sseClients.push(res);

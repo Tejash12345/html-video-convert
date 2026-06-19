@@ -243,11 +243,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     eventSource.onerror = (err) => {
-      console.error('EventSource connection lost:', err);
-      writeLog('EventSource connection lost. Checking status...', 'error');
-      eventSource.close();
-      submitBtn.disabled = false;
-      submitBtn.querySelector('span').textContent = 'Render Video';
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.error('EventSource connection closed:', err);
+        writeLog('EventSource connection closed.', 'error');
+        eventSource.close();
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = 'Render Video';
+      } else {
+        // EventSource is automatically attempting to reconnect in background
+        console.warn('EventSource connection lost. Reconnecting...');
+        writeLog('Connection lost. Reconnecting to progress stream...', 'info');
+      }
     };
   }
 
