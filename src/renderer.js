@@ -235,7 +235,7 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     const fileUrl = `file://${path.resolve(htmlPath).replace(/\\/g, '/')}`;
     if (onProgress) onProgress(0, 'Loading HTML page...');
     
-    await page.goto(fileUrl, { waitUntil: 'networkidle0' });
+    await page.goto(fileUrl, { waitUntil: 'load', timeout: 60000 });
 
     // Allow static image loading and font face rendering to finish (reduced buffer for speed)
     await new Promise(resolve => setTimeout(resolve, 400));
