@@ -1,0 +1,7 @@
+node_modules/
+uploads/
+temp/
+public/videos/*.mp4
+.env
+.cache/
+.DS_Store

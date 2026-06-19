@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML to MP4 Converter — High-Fidelity Local Video Renderer</title>
+  <meta name="description" content="Convert your dynamic HTML, CSS keyframes, and JavaScript animations into high-quality, frame-accurate MP4 videos locally. Free and unlimited.">
+  <!-- Google Fonts: Outfit & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glass-bg-container">
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+  </div>
+
+  <main class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <span class="logo-dot"></span>
+        <h1>HTML <span class="accent-text">to MP4</span></h1>
+      </div>
+      <p class="subtitle">Render local HTML animations, GSAP, and CSS transitions into frame-accurate, high-fidelity MP4 videos.</p>
+    </header>
+
+    <div class="app-content-grid">
+      <!-- Left Panel: Input & Config -->
+      <section class="panel config-panel">
+        <h2 class="panel-title">1. Configuration</h2>
+        
+        <form id="generator-form" class="config-form">
+          <!-- File upload dropzone -->
+          <div class="form-group">
+            <label class="form-label">Upload Template</label>
+            <div id="dropzone" class="upload-dropzone">
+              <input type="file" id="file-input" name="file" accept=".html,.zip" required>
+              <div class="dropzone-content">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p class="dropzone-text-primary">Drag & drop HTML or ZIP file here</p>
+                <p class="dropzone-text-secondary">ZIP archives should contain an index.html file</p>
+              </div>
+            </div>
+            <div id="file-details" class="file-details hidden">
+              <span class="file-name" id="file-name-text">filename.html</span>
+              <span class="file-size" id="file-size-text">0 KB</span>
+              <button type="button" id="remove-file-btn" class="btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Video settings -->
+          <div class="form-row">
+            <div class="form-group col-12">
+              <label for="resolution-preset" class="form-label">Resolution Preset</label>
+              <select id="resolution-preset" class="form-select">
+                <option value="1920x1080" selected>1080p Landscape (1920 × 1080)</option>
+                <option value="1080x1920">1080p Vertical / Shorts (1080 × 1920)</option>
+                <option value="1280x720">720p Landscape (1280 × 720)</option>
+                <option value="1080x1080">Square (1080 × 1080)</option>
+                <option value="custom">Custom Dimensions</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Custom dimensions inputs (hidden by default) -->
+          <div id="custom-resolution-group" class="form-row custom-res-row hidden">
+            <div class="form-group col-6">
+              <label for="custom-width" class="form-label-sub">Width (px)</label>
+              <input type="number" id="custom-width" class="form-input" min="128" max="3840" value="1920">
+            </div>
+            <div class="form-group col-6">
+              <label for="custom-height" class="form-label-sub">Height (px)</label>
+              <input type="number" id="custom-height" class="form-input" min="128" max="3840" value="1080">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- Duration Settings -->
+            <div class="form-group col-12">
+              <div class="label-with-value">
+                <label for="duration-slider" class="form-label">Duration</label>
+                <span id="duration-val" class="badge-value">5.0s</span>
+              </div>
+              <input type="range" id="duration-slider" class="form-slider" min="1" max="60" step="0.5" value="5">
+              <div class="slider-ticks">
+                <span>1s</span>
+                <span>15s</span>
+                <span>30s</span>
+                <span>45s</span>
+                <span>60s</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- FPS Selector -->
+            <div class="form-group col-12">
+              <label class="form-label">Frame Rate (FPS)</label>
+              <div class="fps-selector" role="radiogroup" aria-label="FPS selector">
+                <input type="radio" id="fps-24" name="fps" value="24" class="hidden-radio">
+                <label for="fps-24" class="fps-btn">24</label>
+
+                <input type="radio" id="fps-30" name="fps" value="30" class="hidden-radio" checked>
+                <label for="fps-30" class="fps-btn">30</label>
+
+                <input type="radio" id="fps-60" name="fps" value="60" class="hidden-radio">
+                <label for="fps-60" class="fps-btn">60</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn-primary">
+            <span>Render Video</span>
+            <svg class="btn-icon-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- Right Panel: Status & Player -->
+      <section class="panel status-panel">
+        <h2 class="panel-title">2. Processing & Preview</h2>
+
+        <!-- Empty state placeholder -->
+        <div id="preview-placeholder" class="preview-placeholder">
+          <div class="placeholder-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <line x1="2" y1="7" x2="7" y2="7"></line>
+              <line x1="2" y1="17" x2="7" y2="17"></line>
+              <line x1="17" y1="17" x2="22" y2="17"></line>
+              <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+          </div>
+          <p class="placeholder-text-primary">Awaiting render initialization</p>
+          <p class="placeholder-text-secondary">Configure settings and upload a template file to begin generating your MP4 video.</p>
+        </div>
+
+        <!-- Live generation progress container -->
+        <div id="progress-container" class="progress-container hidden">
+          <div class="progress-header">
+            <span id="progress-status" class="progress-status">Rendering frame sequence...</span>
+            <span id="progress-percent-text" class="progress-percent-value">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          
+          <div class="console-wrapper">
+            <div class="console-header">
+              <span class="console-title">Console Output</span>
+              <span class="console-pulse"></span>
+            </div>
+            <div id="console-log" class="console-log">
+              <!-- Logs append here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Player preview (shown when job succeeds) -->
+        <div id="video-preview-container" class="video-preview-container hidden">
+          <div class="player-wrapper">
+            <video id="preview-player" controls preload="auto">
+              <source id="preview-source" src="" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <div class="action-buttons-group">
+            <a id="download-btn" href="" download class="btn-success">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download MP4</span>
+            </a>
+            <button type="button" id="reset-btn" class="btn-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              <span>Render Another</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
