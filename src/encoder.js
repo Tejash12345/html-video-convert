@@ -35,7 +35,7 @@ function encodeVideo(framesDir, outputPath, fps, onProgress) {
     let totalFrames = 0;
     try {
       const files = fs.readdirSync(framesDir);
-      totalFrames = files.filter(f => f.startsWith('frame_') && f.endsWith('.png')).length;
+      totalFrames = files.filter(f => f.startsWith('frame_') && f.endsWith('.jpg')).length;
     } catch (e) {
       console.warn('[Encoder] Failed to determine frame count:', e.message);
     }
@@ -45,14 +45,15 @@ function encodeVideo(framesDir, outputPath, fps, onProgress) {
     }
 
     ffmpeg()
-      .input(path.join(framesDir, 'frame_%04d.png'))
+      .input(path.join(framesDir, 'frame_%04d.jpg'))
       .inputFPS(fps)
       .output(outputPath)
       .outputFPS(fps)
       .videoCodec('libx264')
       .outputOptions([
         '-pix_fmt yuv420p',  // Standard pixel format for maximum browser compatibility
-        '-crf 18'            // Constant Rate Factor (18 represents near-lossless visually)
+        '-crf 18',           // Constant Rate Factor (18 represents near-lossless visually)
+        '-preset superfast'  // Speed up encoding 5x to 10x faster
       ])
       .on('start', (commandLine) => {
         console.log('[FFmpeg Command]:', commandLine);

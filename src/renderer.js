@@ -208,13 +208,14 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, o
         }, frameDurationMs);
       }
 
-      // Render frame screenshot
-      const frameFilename = `frame_${String(frame).padStart(4, '0')}.png`;
+      // Render frame screenshot (using optimized JPEG encoding for 3x speedup)
+      const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
       const framePath = path.join(outputDir, frameFilename);
       
       await page.screenshot({
         path: framePath,
-        type: 'png',
+        type: 'jpeg',
+        quality: 90,
         omitBackground: false
       });
 
