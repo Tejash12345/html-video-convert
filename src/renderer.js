@@ -297,20 +297,32 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
       }
 
       // Capture frame using raw Chrome DevTools Protocol with quality settings
-      const isPng = renderQuality === 'high';
-      const screenshotOptions = isPng 
-        ? { format: 'png' } 
-        : { format: 'jpeg', quality: 90, optimizeForSpeed: true };
+      // We use high-quality JPEG (95%) for High Quality to prevent OOM memory spikes from PNGs
+      const isHigh = renderQuality === 'high';
+      const screenshotOptions = {
+        format: 'jpeg',
+        quality: isHigh ? 95 : 80,
+        optimizeForSpeed: !isHigh
+      };
 
       const { data } = await client.send('Page.captureScreenshot', screenshotOptions);
 
-      const ext = isPng ? 'png' : 'jpg';
-      const frameFilename = `frame_${String(frame).padStart(4, '0')}.${ext}`;
+      const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
       const framePath = path.join(outputDir, frameFilename);
       const buffer = Buffer.from(data, 'base64');
 
       // Write to disk and await completion to prevent memory accumulation in RAM
       await fs.promises.writeFile(framePath, buffer);
+
+      // Periodically trigger garbage collection in Chrome and Node to keep RAM below 512MB
+      if (frame % 15 === 0) {
+        try {
+          await client.send('HeapProfiler.collectGarbage');
+        } catch (err) {}
+        if (global.gc) {
+          global.gc();
+        }
+      }
 
       const percent = Math.round((frame / totalFrames) * 100);
       if (onProgress) {

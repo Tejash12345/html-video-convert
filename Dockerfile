@@ -24,5 +24,5 @@ COPY . .
 ENV PORT=3000
 EXPOSE 3000
 
-# Command to boot Express server
-CMD ["node", "server.js"]
+# Command to boot Express server with exposed garbage collection
+CMD ["node", "--expose-gc", "server.js"]
