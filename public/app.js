@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileNameText = document.getElementById('file-name-text');
   const fileSizeText = document.getElementById('file-size-text');
   const removeFileBtn = document.getElementById('remove-file-btn');
-  
+
   const resolutionPreset = document.getElementById('resolution-preset');
   const customResGroup = document.getElementById('custom-resolution-group');
   const customWidth = document.getElementById('custom-width');
   const customHeight = document.getElementById('custom-height');
-  
+
   const durationSlider = document.getElementById('duration-slider');
   const durationVal = document.getElementById('duration-val');
-  
+
   const submitBtn = document.getElementById('submit-btn');
   const previewPlaceholder = document.getElementById('preview-placeholder');
   const progressContainer = document.getElementById('progress-container');
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressPercentText = document.getElementById('progress-percent-text');
   const progressBarFill = document.getElementById('progress-bar-fill');
   const consoleLog = document.getElementById('console-log');
-  
+
   const videoPreviewContainer = document.getElementById('video-preview-container');
   const previewPlayer = document.getElementById('preview-player');
   const previewSource = document.getElementById('preview-source');
@@ -68,11 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Only .html and .zip files are supported.');
       return;
     }
-    
+
     selectedFile = file;
     fileNameText.textContent = file.name;
     fileSizeText.textContent = formatBytes(file.size);
-    
+
     dropzone.classList.add('hidden');
     fileDetails.classList.remove('hidden');
     fileInput.required = false; // Bypass default validation since we have the file in variable
@@ -121,12 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Disable UI
     submitBtn.disabled = true;
     submitBtn.querySelector('span').textContent = 'Processing...';
-    
+
     // Set view states
     previewPlaceholder.classList.add('hidden');
     videoPreviewContainer.classList.add('hidden');
     progressContainer.classList.remove('hidden');
-    
+
     // Clear logs
     consoleLog.innerHTML = '';
     writeLog('Initializing generation request...', 'info');
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let width = 1920;
     let height = 1080;
     const preset = resolutionPreset.value;
-    
+
     if (preset === 'custom') {
       width = parseInt(customWidth.value, 10) || 1920;
       height = parseInt(customHeight.value, 10) || 1080;
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       writeLog(`Uploading ${selectedFile.name} (${formatBytes(selectedFile.size)})...`, 'info');
       writeLog(`Target resolution: ${width}x${height} @ ${fps}fps, Duration: ${duration}s`, 'accent');
-      
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         body: formData
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const { jobId } = await response.json();
       writeLog(`Upload success. Job registered: ${jobId}`, 'success');
-      
+
       // Start EventSource connection
       listenToProgress(jobId);
     } catch (err) {
@@ -199,17 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBarFill.style.width = `${percent}%`;
         progressPercentText.textContent = `${percent}%`;
         progressStatus.textContent = message;
-        
+
         let type = 'info';
         if (message.includes('success') || message.includes('complete')) type = 'success';
         else if (message.includes('Compiler') || message.includes('FFmpeg')) type = 'accent';
-        
+
         writeLog(message, type);
-      } 
+      }
       else if (data.type === 'done') {
         const { videoUrl } = data;
         writeLog(`Success! Video rendered successfully. File available at ${videoUrl}`, 'success');
-        
+
         progressBarFill.style.width = '100%';
         progressPercentText.textContent = '100%';
         progressStatus.textContent = 'Completed!';
@@ -221,19 +221,19 @@ document.addEventListener('DOMContentLoaded', () => {
           previewPlayer.src = videoUrl;
           downloadBtn.href = `/api/download/${jobId}.mp4`;
           previewPlayer.load();
-          
+
           progressContainer.classList.add('hidden');
           videoPreviewContainer.classList.remove('hidden');
-          
+
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = 'Render Video';
         }, 800);
-      } 
+      }
       else if (data.type === 'error') {
         const { message } = data;
         writeLog(`FATAL ERROR: ${message}`, 'error');
         progressStatus.textContent = 'Generation failed.';
-        
+
         eventSource.close();
         submitBtn.disabled = false;
         submitBtn.querySelector('span').textContent = 'Render Video';
@@ -253,10 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function writeLog(text, type = 'info') {
     const line = document.createElement('div');
     line.className = `console-line console-line-${type}`;
-    
+
     const timestamp = new Date().toLocaleTimeString();
     line.textContent = `[${timestamp}] ${text}`;
-    
+
     consoleLog.appendChild(line);
     // Auto-scroll console
     consoleLog.scrollTop = consoleLog.scrollHeight;
@@ -279,10 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
     videoPreviewContainer.classList.add('hidden');
     progressContainer.classList.add('hidden');
     previewPlaceholder.classList.remove('hidden');
-    
+
     progressBarFill.style.width = '0%';
     progressPercentText.textContent = '0%';
-    
+
     // Reset form values
     form.reset();
     customResGroup.classList.add('hidden');

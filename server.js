@@ -43,7 +43,7 @@ function updateJobProgress(jobId, percent, message) {
   if (!job) return;
   job.progress = percent;
   job.message = message;
-  
+
   job.sseClients.forEach(res => {
     res.write(`data: ${JSON.stringify({ type: 'progress', percent, message })}\n\n`);
   });
@@ -54,12 +54,12 @@ function completeJob(jobId, videoUrl) {
   if (!job) return;
   job.status = 'completed';
   job.videoUrl = videoUrl;
-  
+
   job.sseClients.forEach(res => {
     res.write(`data: ${JSON.stringify({ type: 'done', videoUrl })}\n\n`);
     res.end();
   });
-  
+
   // Persist the job details briefly so client has time to establish SSE connection
   setTimeout(() => {
     jobs.delete(jobId);
@@ -71,12 +71,12 @@ function failJob(jobId, errorMessage) {
   if (!job) return;
   job.status = 'failed';
   job.error = errorMessage;
-  
+
   job.sseClients.forEach(res => {
     res.write(`data: ${JSON.stringify({ type: 'error', message: errorMessage })}\n\n`);
     res.end();
   });
-  
+
   // Persist the job details briefly so client has time to establish SSE connection
   setTimeout(() => {
     jobs.delete(jobId);
@@ -97,7 +97,7 @@ app.post('/api/generate', upload.single('file'), async (req, res) => {
     const fps = parseInt(req.body.fps, 10) || 30;
 
     const jobId = `job-${Date.now()}`;
-    
+
     // Create job entry
     jobs.set(jobId, {
       id: jobId,
@@ -170,7 +170,7 @@ app.get('/api/progress/:jobId', (req, res) => {
 app.get('/api/download/:filename', (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(VIDEOS_DIR, filename);
-  
+
   if (fs.existsSync(filePath)) {
     res.download(filePath, filename);
   } else {
@@ -182,7 +182,7 @@ app.get('/api/download/:filename', (req, res) => {
 async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, height, duration, fps) {
   const jobTempDir = path.join(TEMP_DIR, jobId);
   const framesDir = path.join(jobTempDir, 'frames');
-  
+
   try {
     fs.mkdirSync(framesDir, { recursive: true });
 
@@ -226,7 +226,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, 
     }
 
     updateJobProgress(jobId, 10, 'Opening Puppeteer render sandbox...');
-    
+
     // Render frames
     await renderFrames(entryHtmlPath, framesDir, width, height, duration, fps, (percent, msg) => {
       // Scale Puppeteer render progress to occupy 10% to 80% range of the total workflow
@@ -247,7 +247,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, 
     });
 
     updateJobProgress(jobId, 100, 'Video creation completed! Finalizing...');
-    
+
     // Clean up temporary job folder and uploaded file
     try {
       fs.rmSync(jobTempDir, { recursive: true, force: true });
@@ -260,7 +260,7 @@ async function processHtmlToVideo(jobId, uploadedFilePath, originalName, width, 
 
   } catch (err) {
     console.error(`[Job Error] Job ${jobId} failed:`, err);
-    
+
     // Attempt cleanup on failure
     try {
       if (fs.existsSync(jobTempDir)) {
