@@ -81,8 +81,9 @@ async function getBrowser() {
 async function renderFrames(htmlPath, outputDir, width, height, duration, fps, deviceMode, onProgress) {
   const browser = await getBrowser();
   
+  let page = null;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
 
     let viewportWidth = width;
     let viewportHeight = height;
@@ -299,7 +300,9 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
       }
     }
   } finally {
-    await page.close(); // Only close the page tab, keep the global browser process alive for fast reuse!
+    if (page) {
+      await page.close(); // Only close the page tab, keep the global browser process alive for fast reuse!
+    }
   }
 }
 
