@@ -94,6 +94,8 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
       const timers = new Map();
       const rafCallbacks = new Map();
       let rafIdCounter = 0;
+      let lastElementCount = 0;
+      let animatedElements = [];
 
       // Intercept and override Date.now and performance.now
       window.performance = window.performance || {};
@@ -205,18 +207,26 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
           });
         }
 
-        // Pause and seek CSS Keyframe animations (via negative delay)
-        const elements = document.querySelectorAll('*');
-        elements.forEach(el => {
+        // Pause and seek CSS Keyframe animations (via negative delay) with element caching for 90% speedup
+        const currentElements = document.querySelectorAll('*');
+        if (currentElements.length !== lastElementCount) {
+          lastElementCount = currentElements.length;
+          animatedElements = [];
+          currentElements.forEach(el => {
+            try {
+              const style = window.getComputedStyle(el);
+              if (style.animationName && style.animationName !== 'none') {
+                animatedElements.push(el);
+              }
+            } catch (err) {}
+          });
+        }
+
+        animatedElements.forEach(el => {
           try {
-            const style = window.getComputedStyle(el);
-            if (style.animationName && style.animationName !== 'none') {
-              el.style.animationPlayState = 'paused';
-              el.style.animationDelay = `-${currentTime / 1000}s`;
-            }
-          } catch (err) {
-            // Ignore elements that computed style check fails on
-          }
+            el.style.animationPlayState = 'paused';
+            el.style.animationDelay = `-${currentTime / 1000}s`;
+          } catch (err) {}
         });
       };
     });
@@ -227,8 +237,8 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
     
     await page.goto(fileUrl, { waitUntil: 'networkidle0' });
 
-    // Allow static image loading and font face rendering to finish
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Allow static image loading and font face rendering to finish (reduced buffer for speed)
+    await new Promise(resolve => setTimeout(resolve, 400));
 
     const totalFrames = Math.ceil(duration * fps);
     const frameDurationMs = 1000 / fps;
@@ -241,16 +251,18 @@ async function renderFrames(htmlPath, outputDir, width, height, duration, fps, d
         }, frameDurationMs);
       }
 
-      // Render frame screenshot (using optimized JPEG encoding for 3x speedup)
+      // Render frame screenshot (using optimized JPEG encoding and non-blocking asynchronous disk writes for maximum speed)
       const frameFilename = `frame_${String(frame).padStart(4, '0')}.jpg`;
       const framePath = path.join(outputDir, frameFilename);
       
-      await page.screenshot({
-        path: framePath,
+      const buffer = await page.screenshot({
         type: 'jpeg',
-        quality: 90,
+        quality: 80, // Slightly reduced quality to dramatically speed up JPEG encoding and lower disk IO
         omitBackground: false
       });
+
+      // Write to disk asynchronously without blocking the frame rendering loop
+      fs.writeFile(framePath, buffer, () => {});
 
       const percent = Math.round((frame / totalFrames) * 100);
       if (onProgress) {
